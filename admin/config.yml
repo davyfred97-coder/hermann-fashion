@@ -1,0 +1,17 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "images"
+public_folder: "/images"
+
+collections:
+  - name: "catalogue"
+    label: "Catalogue de Créations"
+    folder: "data/creations"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - {label: "Titre de la robe", name: "title", widget: "string"}
+      - {label: "Catégorie", name: "category", widget: "select", options: ["Mariée", "Soirée", "Prêt-à-porter"]}
+      - {label: "Image", name: "image", widget: "image"}
