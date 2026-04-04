@@ -4,19 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hermann Fashion | Catalogue Haute Couture</title>
-    
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-
-    <link rel="stylesheet" href="style.css">
-    
     <style>
-        /* Petit style rapide pour tester l'affichage si ton CSS n'est pas encore là */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f9f9f9; color: #333; }
-        header { background: #000; color: #fff; padding: 2rem; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
-        .container { max-width: 1200px; margin: 20px auto; padding: 20px; text-align: center; }
-        .catalogue-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
-        .card { background: white; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; }
-        .card img { max-width: 100%; border-radius: 4px; }
+        body { font-family: 'Arial', sans-serif; margin: 0; background: #fff; color: #000; text-align: center; }
+        header { background: #000; color: #fff; padding: 3rem 1rem; text-transform: uppercase; }
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .catalogue-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 30px; 
+            margin-top: 40px; 
+        }
+        .card { border: 1px solid #eee; padding: 10px; transition: 0.3s; }
+        .card:hover { border-color: #000; }
+        .card img { width: 100%; height: 400px; object-fit: cover; }
+        .card h3 { font-size: 1.2rem; margin: 15px 0 5px; }
+        .card p { color: #666; font-style: italic; }
     </style>
 </head>
 <body>
@@ -28,26 +31,55 @@
 
     <div class="container">
         <h2>Notre Catalogue</h2>
-        <p>Bienvenue sur votre espace mode. Les créations ajoutées via l'administration s'afficheront ici bientôt.</p>
-        
-        <div class="catalogue-grid" id="catalogue">
-            <div class="card">
-                <p>Chargement des dernières créations...</p>
-            </div>
+        <div class="catalogue-grid" id="catalogue-container">
+            <p id="loading-msg">Chargement des créations...</p>
         </div>
     </div>
 
     <script>
-      if (window.netlifyIdentity) {
-        window.netlifyIdentity.on("init", user => {
-          if (!user) {
-            window.netlifyIdentity.on("login", () => {
-              document.location.href = "/admin/";
-            });
-          }
-        });
-      }
-    </script>
+        // FONCTION MAGIQUE : Va chercher les fichiers créés par l'admin sur GitHub
+        async function loadCreations() {
+            const container = document.getElementById('catalogue-container');
+            const loadingMsg = document.getElementById('loading-msg');
 
+            try {
+                // On demande à GitHub la liste des fichiers dans data/creations
+                const response = await fetch('https://api.github.com/repos/davyfred97-coder/Hermann-Fashion/contents/data/creations');
+                const files = await response.json();
+
+                if (files.length > 0) {
+                    container.innerHTML = ''; // On vide le message de chargement
+                    
+                    for (const file of files) {
+                        // On récupère le contenu de chaque fichier .md
+                        const res = await fetch(file.download_url);
+                        const text = await res.text();
+                        
+                        // Extraction simple des infos (Titre et Image)
+                        const title = text.match(/title: (.*)/)?.[1] || "Sans titre";
+                        const imgPath = text.match(/image: (.*)/)?.[1] || "";
+                        const category = text.match(/category: (.*)/)?.[1] || "";
+
+                        // On crée la carte HTML
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.innerHTML = `
+                            <img src="${imgPath}" alt="${title}">
+                            <h3>${title}</h3>
+                            <p>${category}</p>
+                        `;
+                        container.appendChild(card);
+                    }
+                } else {
+                    loadingMsg.innerText = "Aucune création pour le moment.";
+                }
+            } catch (error) {
+                console.error("Erreur :", error);
+                loadingMsg.innerText = "Publiez votre première création dans l'admin pour l'afficher ici !";
+            }
+        }
+
+        loadCreations();
+    </script>
 </body>
 </html>
